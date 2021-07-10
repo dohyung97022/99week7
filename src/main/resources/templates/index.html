@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta property="og:title" content="00만의 셀렉샵">
+    <meta property="og:description" content="관심상품을 선택하고, 최저가 알림을 확인해보세요!">
+    <meta property="og:image" content="images/og_selectshop.png">
+    <link rel="stylesheet" href="css/comment.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/thread.css">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.3/css/all.css"
+          integrity="sha384-SZXxX4whJ79/gErwcOYf+zWLeJdY/qpuqC4cAa9rOGUstPomtqpuNWT9wdPEn2fk" crossorigin="anonymous"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="js/index.js"></script>
+    <title>나만의 셀렉샵</title>
+</head>
+<body>
+<div class="header" style="position:relative;">
+    <div th:if="${user}" id="header-title-login-user">
+        환영합니다. <span th:text="${user.username}"></span>님
+    </div>
+    <div id="header-title-select-shop">
+        게시판
+    </div>
+
+    <p id="msg" th:text="${msg}"></p>
+
+    <a th:if="${user}" class="logout-text" href="/user/logout">
+        로그아웃
+    </a>
+    <a th:unless="${user}" class="logout-text" href="/user/login">
+        로그인
+    </a>
+</div>
+<div id="see-area">
+    <div class="add-thread" th:if="${user}" th:onclick="|msg(); toggleThreadTmpl('/thread','post', true)|">
+        <i class="fas fa-plus-circle"></i>
+    </div>
+    <div class="add-thread" th:unless="${user}" th:onclick="msg('로그인이 필요한 기능입니다.'); redirect('/user/login')">
+        <i class="fas fa-plus-circle"></i>
+    </div>
+    <div id="thread-container">
+        <div class="item" th:each="thread : ${threads}">
+
+            <div class="article">
+                <h1 th:text="${thread.title}"></h1>
+                <div class="username-date">
+                    <p class="username" th:text="${thread.user?.username}"></p>
+                    <p class="date" th:text="${#temporals.format(thread.modifiedAt, 'yy-MM-dd HH:mm')}"></p>
+                </div>
+                <div class="content" th:text="${thread.content}">
+                </div>
+                <div class="edit" th:if="${user} and ${user.id == thread.user.id}">
+                    <div th:onclick="|msg(); toggleThreadTmpl('/thread/${thread.id}', 'PATCH', true)|">
+                        <i class="far fa-edit"></i>
+                    </div>
+                    <div th:onclick="|msg(); ask('정말로 삭제하시겠습니까?',function(){ return request('/thread/${thread.id}', 'DELETE'); })|">
+                        <i class="far fa-trash-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size: 10px; margin-top: 30px">댓글</div>
+            <hr>
+
+            <div class="comment-container">
+
+                <div class="comment" th:each="comment : ${thread.comments}">
+                    <div class="username-date">
+                        <p class="username" th:text="${comment.user.username}"></p>
+                        <p class="date" th:text="${#temporals.format(comment.modifiedAt, 'yy-MM-dd HH:mm')}"></p>
+                    </div>
+                    <div class="content" th:text="${comment.content}">
+                    </div>
+                    <div class="edit" th:if="${user} and ${user.id == comment.user.id}">
+                        <div th:onclick="|msg(); toggleThreadTmpl('/comment/${comment.id}', 'PATCH', false)|">
+                            <i class="far fa-edit"></i>
+                        </div>
+                        <div th:onclick="|msg(); ask('정말로 삭제하시겠습니까?',function(){ return request('/comment/${comment.id}', 'delete'); })|">
+                            <i class="far fa-trash-alt"></i>
+                        </div>
+                    </div>
+                    <hr>
+                </div>
+
+            </div>
+
+            <div class="add-thread" th:if="${user}" th:onclick="|msg(); toggleCommentTmpl(${thread.id})|">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <div class="add-thread" th:unless="${user}" th:onclick="msg('로그인이 필요한 기능입니다.'); redirect('/user/login')">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+
+            <div th:id="'comment-creator-' + ${thread.id}" class="comment-creator" style="display: none">
+                <form action="/comment" method="post">
+                    <input type="hidden" name="threadId" th:value="${thread.id}">
+
+                    <div class="login-id-label">내용</div>
+                    <input type="text" name="content" class="comment-input-box">
+
+                    <button class="login-id-submit">작성</button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="thread-creator" style="display: none">
+        <form action="/thread" method="post">
+            <input type="hidden" name="_method" value="post" id="method">
+
+            <div class="login-id-label thread-creator-title">제목</div>
+            <input type="text" name="title" class="login-input-box thread-creator-title">
+
+            <div class="login-id-label">내용</div>
+            <input type="text" name="content" class="thread-input-box">
+
+            <button class="login-id-submit">작성</button>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>
